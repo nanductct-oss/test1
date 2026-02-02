@@ -24,22 +24,17 @@
     body {
       margin: 0;
       min-height: 100svh;
-
-      /* FIX: allow vertical growth */
       display: flex;
       justify-content: center;
-      align-items: flex-start;
-
+      align-items: center;
       background: radial-gradient(circle at top, var(--bg2), var(--bg1));
       font-family: system-ui, sans-serif;
-
-      /* FIX: allow scrolling */
-      overflow-y: auto;
-
       padding: 16px;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
 
-    /* FULL-SCREEN CONFETTI */
+    /* CONFETTI CANVAS */
     #confettiCanvas {
       position: fixed;
       inset: 0;
@@ -51,15 +46,12 @@
 
     .card {
       width: min(720px, 92vw);
-      padding: 26px 22px;
+      padding: 26px 22px 32px;
       background: var(--card);
       backdrop-filter: blur(10px);
       border-radius: 22px;
       text-align: center;
       box-shadow: 0 18px 60px rgba(0,0,0,.15);
-
-      /* FIX: spacing for short screens */
-      margin: 40px 0;
     }
 
     .art {
@@ -72,6 +64,7 @@
     h1 {
       font-size: clamp(26px, 4vw, 44px);
       margin: 12px 0 18px;
+      line-height: 1.25;
     }
 
     .button-zone {
@@ -103,7 +96,6 @@
       background: var(--yes);
       color: #fff;
     }
-
     #yesBtn:hover {
       background: var(--yesHover);
     }
@@ -122,30 +114,25 @@
 
     .result {
       display: none;
-      margin-top: 18px;
+      margin-top: 20px;
       animation: pop .35s ease;
     }
 
     .result h2 {
       font-size: clamp(30px, 4.5vw, 46px);
-      margin: 10px 0;
+      margin: 10px 0 14px;
     }
 
     .fireworks {
       width: min(380px, 90vw);
       margin: 0 auto;
       display: block;
+      border-radius: 14px;
     }
 
     @keyframes pop {
-      from {
-        transform: scale(.96);
-        opacity: 0;
-      }
-      to {
-        transform: scale(1);
-        opacity: 1;
-      }
+      from { transform: scale(.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
   </style>
 </head>
@@ -154,7 +141,7 @@
   <canvas id="confettiCanvas"></canvas>
 
   <main class="card">
-    <!-- ANIMAL -->
+    <!-- ART -->
     <svg class="art" viewBox="0 0 320 240" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="fur" x1="0" x2="1">
@@ -200,123 +187,3 @@
     <section class="button-zone" id="zone">
       <button id="yesBtn">Yes</button>
       <button id="noBtn">No</button>
-    </section>
-
-    <div class="hint" id="hint">“No” seems a bit shy 😈</div>
-
-    <section class="result" id="result">
-      <h2>YAY! 🎉</h2>
-      <img
-        class="fireworks"
-        src="https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif"
-        alt="Fireworks"
-      />
-    </section>
-  </main>
-
-  <script>
-    const zone = document.getElementById("zone");
-    const yesBtn = document.getElementById("yesBtn");
-    const noBtn = document.getElementById("noBtn");
-    const result = document.getElementById("result");
-    const hint = document.getElementById("hint");
-
-    const confettiCanvas = document.getElementById("confettiCanvas");
-
-    function resizeConfettiCanvas() {
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
-      confettiCanvas.width = window.innerWidth * dpr;
-      confettiCanvas.height = window.innerHeight * dpr;
-    }
-
-    resizeConfettiCanvas();
-    window.addEventListener("resize", resizeConfettiCanvas);
-
-    const confettiInstance = confetti.create(confettiCanvas, {
-      resize: false,
-      useWorker: true
-    });
-
-    function fullScreenConfetti() {
-      const end = Date.now() + 1600;
-
-      (function frame() {
-        confettiInstance({
-          particleCount: 12,
-          spread: 90,
-          startVelocity: 45,
-          ticks: 180,
-          origin: { x: Math.random(), y: Math.random() * 0.3 }
-        });
-        if (Date.now() < end) requestAnimationFrame(frame);
-      })();
-
-      setTimeout(() => {
-        confettiInstance({
-          particleCount: 300,
-          spread: 140,
-          startVelocity: 60,
-          ticks: 220,
-          origin: { x: 0.5, y: 0.55 }
-        });
-      }, 300);
-    }
-
-    let yesScale = 1;
-    function growYes() {
-      yesScale = Math.min(2.2, yesScale + 0.1);
-      yesBtn.style.transform = `translateY(-50%) scale(${yesScale})`;
-    }
-
-    function clamp(n, min, max) {
-      return Math.max(min, Math.min(max, n));
-    }
-
-    function moveNo(px, py) {
-      const z = zone.getBoundingClientRect();
-      const b = noBtn.getBoundingClientRect();
-
-      let dx = (b.left + b.width / 2) - px;
-      let dy = (b.top + b.height / 2) - py;
-      let mag = Math.hypot(dx, dy) || 1;
-      dx /= mag;
-      dy /= mag;
-
-      let newLeft = (b.left - z.left) + dx * 150;
-      let newTop = (b.top - z.top) + dy * 150;
-
-      newLeft = clamp(newLeft, 0, z.width - b.width);
-      newTop = clamp(newTop, 0, z.height - b.height);
-
-      noBtn.style.left = newLeft + "px";
-      noBtn.style.top = newTop + "px";
-      noBtn.style.transform = "none";
-
-      growYes();
-    }
-
-    zone.addEventListener("pointermove", e => {
-      const b = noBtn.getBoundingClientRect();
-      const d = Math.hypot(
-        (b.left + b.width / 2) - e.clientX,
-        (b.top + b.height / 2) - e.clientY
-      );
-      if (d < 140) moveNo(e.clientX, e.clientY);
-    });
-
-    noBtn.addEventListener("click", e => e.preventDefault());
-
-    yesBtn.addEventListener("click", () => {
-      zone.style.display = "none";
-      hint.style.display = "none";
-      result.style.display = "block";
-
-      resizeConfettiCanvas();
-      fullScreenConfetti();
-
-      // FIX: ensure result is visible on all screens
-      result.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  </script>
-</body>
-</html>
